@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "supertoken-holders-sync"
+name = "sf-dune-utils"
 version = "0.1.0"
 description = "Sync SuperToken holder data to Dune Analytics"
 authors = ["Superfluid"]

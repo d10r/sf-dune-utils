@@ -1,83 +1,45 @@
-# SuperToken Holders Sync Daemon
+# Superfluid Dune Sync
 
-Continuously syncs SuperToken holder data from all mainnet Superfluid networks to Dune Analytics.
+Syncs Superfluid data to Dune Analytics.
 
-## Features
+## Scripts
 
-- Runs as a daemon with configurable update intervals
-- Fetches networks and tokens dynamically from Superfluid metadata
-- Gets holder data from Superfluid API
-- Creates CSV files and uploads to Dune
-- Archives files with timestamps
-- Graceful shutdown with signal handling
+- **`supertoken_holders_sync.py`** - Syncs SuperToken holder data fetched from supertoken-api from all mainnet networks
+- **`sup_metrics_sync.py`** - Syncs SUP distribution metrics fetched from sup-metrics-api daily
 
 ## Setup
 
-1. Install dependencies using Poetry:
+Install dependencies:
 ```bash
 poetry install
 ```
 
-2. Set up Dune Analytics API key:
-   - Create a `.env` file in the project directory
-   - Add your Dune API key:
-   ```
-   DUNE_API_KEY=your_dune_api_key_here
-   ```
-   - Get your API key from https://dune.com/settings/api
-
-3. Create data directory:
+Create `.env` file:
 ```bash
-mkdir -p data/archive/{csv,json}
+DUNE_API_KEY=your_api_key_here
 ```
+
+Get your API key from https://dune.com/settings/api
 
 ## Usage
 
-### Environment Variables
-
-- `UPDATE_INTERVAL`: Update interval in seconds (default: 3600 = 1 hour)
-- `DEBUG`: Set to any value to process only the first network for testing
-
-### Running the Daemon
-
-Run the daemon using Poetry:
+Run SuperToken holders sync:
 ```bash
 poetry run python supertoken_holders_sync.py
 ```
 
-Or activate the Poetry shell and run directly:
+Run SUP metrics sync:
 ```bash
-poetry shell
-python supertoken_holders_sync.py
+poetry run python sup_metrics_sync.py
 ```
 
-### Custom Update Interval
+## Environment Variables
 
-Set a custom update interval (e.g., 30 minutes = 1800 seconds):
-```bash
-UPDATE_INTERVAL=1800 poetry run python supertoken_holders_sync.py
-```
-
-### Stopping the Daemon
-
-The daemon can be stopped gracefully using:
-- `Ctrl+C` (SIGINT)
-- `kill -TERM <pid>` (SIGTERM)
-
-The daemon will complete the current sync cycle before shutting down.
+- `DUNE_API_KEY` - Required for uploads
+- `SUPERTOKEN_HOLDERS_UPDATE_INTERVAL` - Update interval in seconds (default: 86400)
 
 ## Output
 
-The script will:
-- Create CSV files in the `data/` directory
-- Upload CSV files to Dune Analytics with naming convention: `{chain}_{token}_holders`
-- Archive all files in `data/archive/{csv,json}/` with timestamps
-- Log all activities to `supertoken_sync.log`
-
-## Logging
-
-The script provides detailed logging including:
-- Number of SuperTokens found per chain
-- Number of holders for each token
-- Processing status and errors
-- Upload success/failure status
+Data is uploaded to Dune namespace `superfluid_hq`:
+- SuperToken holders: `{chain}_{token}_holders` tables
+- SUP metrics: `sup_metrics_history` table (daily appends)
