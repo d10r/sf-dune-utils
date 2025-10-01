@@ -42,7 +42,7 @@ class SupMetricsSync(DuneSyncBase):
     def create_table_schema(self, metrics):
         """Create table schema for SUP metrics"""
         schema = [
-            {"name": "date", "type": "string", "nullable": False},
+            {"name": "timestamp", "type": "timestamp", "nullable": False},
             {"name": "reserve_balances", "type": "bigint", "nullable": True},
             {"name": "staked_sup", "type": "bigint", "nullable": True},
             {"name": "lp_sup", "type": "bigint", "nullable": True},
@@ -69,11 +69,14 @@ class SupMetricsSync(DuneSyncBase):
         metrics = data.get("metrics", {})
         self.logger.info(f"Fetched metrics data for {len(metrics)} metrics")
         
-        table_name = "sup_metrics_history"
+        table_name = "sup_metrics_history2"
         
         # Create new row data with correct column names
+        from datetime import datetime
+        current_timestamp = datetime.now().isoformat()
+        
         new_row = {
-            'date': self.date_string,
+            'timestamp': current_timestamp,
             'reserve_balances': metrics.get('reserveBalances'),
             'staked_sup': metrics.get('stakedSup'),
             'lp_sup': metrics.get('lpSup'),
