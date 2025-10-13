@@ -83,10 +83,15 @@ class DuneSyncBase:
             return False
     
     def create_table(self, table_name, schema, description="", is_private=False):
-        """Create a new table in Dune with defined schema"""
+        """Create a new table in Dune with defined schema
+        
+        Returns:
+            dict: API response if table was created successfully
+            None: if table already exists or creation failed
+        """
         if not self.dune:
             self.logger.warning("Dune client not available, skipping table creation")
-            return False
+            return None
             
         try:
             result = self.dune.create_table(
@@ -96,12 +101,49 @@ class DuneSyncBase:
                 description=description,
                 is_private=is_private
             )
-            self.logger.info(f"Created table {table_name} in Dune")
-            return True
+            
+            # Check if table was newly created or already existed
+            if result and not getattr(result, 'already_existed', True):
+                self.logger.info(f"Created new table {table_name} in Dune")
+                return result
+            else:
+                self.logger.info(f"Table {table_name} already exists in Dune")
+                return None
+                
         except Exception as e:
             # Table might already exist, which is fine
             self.logger.info(f"Table {table_name} creation skipped (likely already exists): {e}")
-            return True  # Return True since we can proceed with inserts
+            return None  # Return None when table already exists
+    
+    def clear_table_data(self, table_name):
+        """Clear all data from a Dune table using the API endpoint"""
+        try:
+            import requests
+            
+            # Get API key from environment (same way DuneClient.from_env() does)
+            api_key = os.getenv('DUNE_API_KEY')
+            if not api_key:
+                self.logger.error("DUNE_API_KEY environment variable not set")
+                return False
+            
+            # Make direct API call to clear table
+            url = f"https://api.dune.com/api/v1/table/{DUNE_NAMESPACE}/{table_name}/clear"
+            headers = {
+                "X-DUNE-API-KEY": api_key
+            }
+            
+            response = requests.post(url, headers=headers)
+            
+            if response.status_code == 200:
+                self.logger.info(f"Successfully cleared data from table {table_name}")
+                return True
+            else:
+                self.logger.error(f"Failed to clear table {table_name}: HTTP {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to clear table {table_name}: {e}")
+            return False
     
     def insert_data_to_dune(self, table_name, data):
         """Insert data rows into an existing Dune table"""

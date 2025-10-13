@@ -36,6 +36,7 @@ class SuperTokenSync(DuneSyncBase):
         try:
             endpoint = network["subgraphV1"]["hostedEndpoint"]
             
+            # TODO: this assumes there's not more than 1000 listed tokens. Needs pagination at some point.
             query = """
             query { tokens(first: 1000, where: {isListed: true}) { id symbol name } }
             """

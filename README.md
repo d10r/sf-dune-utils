@@ -32,11 +32,21 @@ Run SUP metrics sync:
 ```bash
 poetry run python sup_metrics_sync.py
 ```
+Note that this currently has no protection against creating more than one entry per day if restarted.
+That however seems to not distort the resulting Dune charts which show just one tick per day anyway.
 
 ## Environment Variables
 
 - `DUNE_API_KEY` - Required for uploads
-- `SUPERTOKEN_HOLDERS_UPDATE_INTERVAL` - Update interval in seconds (default: 86400)
+
+### specific for SuperToken holders sync
+
+- `SUPERTOKEN_HOLDERS_UPDATE_INTERVAL` - Update interval in seconds (default: 86400)`
+
+### specific for SUP metrics sync
+
+- `SUP_METRICS_TABLE_NAME` - Name of the table to sync to. Default: `sup_metrics_history`
+- `SUP_METRICS_INIT` - Set to `true` to initialize the table: create it (if not exists), clear all data, and load preset data from `sup_metrics_preset.csv`. Used for initial setup or rebuilding the table from scratch.
 
 ## Output
 
