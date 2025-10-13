@@ -46,6 +46,7 @@ class SupMetricsSync(DuneSyncBase):
         """Create table schema for SUP metrics"""
         schema = [
             {"name": "timestamp", "type": "timestamp", "nullable": False},
+            {"name": "reserves", "type": "bigint", "nullable": True},
             {"name": "lockers", "type": "bigint", "nullable": True},
             {"name": "staked", "type": "bigint", "nullable": True},
             {"name": "lp", "type": "bigint", "nullable": True},
@@ -186,10 +187,11 @@ class SupMetricsSync(DuneSyncBase):
         """Insert current metrics data"""
         from datetime import datetime
         current_timestamp = datetime.now().isoformat()
-        
+
         new_row = {
             'timestamp': current_timestamp,
-            'lockers': metrics.get('reserveBalances'),
+            'reserves': metrics.get('reserveBalances'),
+            'lockers': metrics.get('lockerBalances'),
             'staked': metrics.get('stakedSup'),
             'lp': metrics.get('lpSup'),
             'fontaines': metrics.get('streamingOut'),
