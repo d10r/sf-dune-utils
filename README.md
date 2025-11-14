@@ -47,6 +47,7 @@ That however seems to not distort the resulting Dune charts which show just one 
 
 - `SUP_METRICS_TABLE_NAME` - Name of the table to sync to. Default: `sup_metrics_history`
 - `SUP_METRICS_INIT` - Set to `true` to initialize the table: create it (if not exists), clear all data, and load preset data from `sup_metrics_preset.csv`. Used for initial setup or rebuilding the table from scratch.
+In order to download the current data, you can run `poetry run python sup_metrics_download.py`.
 
 ## Output
 

@@ -200,4 +200,85 @@ class DuneSyncBase:
         except Exception as e:
             self.logger.error(f"Failed to archive {file_path}: {e}")
             return False
+    
+    def download_table_data(self, table_name):
+        """Download all data from a Dune table by executing a SQL query
+        
+        Returns:
+            list: List of dictionaries representing table rows, or None if failed
+        """
+        try:
+            import requests
+            
+            # Get API key from environment
+            api_key = os.getenv('DUNE_API_KEY')
+            if not api_key:
+                self.logger.error("DUNE_API_KEY environment variable not set")
+                return None
+            
+            # Execute SQL query to get all data from the table
+            # Use full table path: dune.schema.table
+            sql_query = f'SELECT * FROM dune."{DUNE_NAMESPACE}"."{table_name}"'
+            
+            # Create query via API
+            headers = {"X-DUNE-API-KEY": api_key}
+            create_url = "https://api.dune.com/api/v1/query"
+            create_data = {
+                "query_sql": sql_query,
+                "name": f"Download {table_name}"
+            }
+            
+            create_response = requests.post(create_url, json=create_data, headers=headers)
+            if create_response.status_code != 200:
+                self.logger.error(f"Failed to create query: HTTP {create_response.status_code} - {create_response.text}")
+                return None
+            
+            query_id = create_response.json()["query_id"]
+            self.logger.info(f"Created query {query_id}, executing...")
+            
+            # Execute query
+            execute_url = f"https://api.dune.com/api/v1/query/{query_id}/execute"
+            execute_response = requests.post(execute_url, headers=headers)
+            if execute_response.status_code != 200:
+                self.logger.error(f"Failed to execute query: HTTP {execute_response.status_code} - {execute_response.text}")
+                return None
+            
+            execution_id = execute_response.json()["execution_id"]
+            
+            # Wait for query to complete
+            import time
+            while True:
+                status_url = f"https://api.dune.com/api/v1/execution/{execution_id}/status"
+                status_response = requests.get(status_url, headers=headers)
+                if status_response.status_code != 200:
+                    self.logger.error(f"Failed to get query status: HTTP {status_response.status_code}")
+                    return None
+                
+                status = status_response.json()
+                if status["state"] == "QUERY_STATE_COMPLETED":
+                    break
+                elif status["state"] == "QUERY_STATE_FAILED":
+                    self.logger.error(f"Query failed: {status.get('error', 'Unknown error')}")
+                    return None
+                
+                time.sleep(1)
+            
+            # Get results
+            results_url = f"https://api.dune.com/api/v1/execution/{execution_id}/results"
+            results_response = requests.get(results_url, headers=headers)
+            if results_response.status_code != 200:
+                self.logger.error(f"Failed to get query results: HTTP {results_response.status_code}")
+                return None
+            
+            results_data = results_response.json()
+            rows = results_data.get("result", {}).get("rows", [])
+            
+            self.logger.info(f"Downloaded {len(rows)} rows from {table_name}")
+            return rows
+            
+        except Exception as e:
+            import traceback
+            self.logger.error(f"Failed to download table data from {table_name}: {e}")
+            self.logger.error(f"Full traceback: {traceback.format_exc()}")
+            return None
 
